@@ -1,3 +1,4 @@
+## This file is just copied form the original github repo, but changed, so that it may work  with my own data
 # data2text-transformer
 Code for **Enhanced Transformer Model for Data-to-Text Generation** [\[PDF\]](https://www.aclweb.org/anthology/D19-5615/) (Gong, Crego, Senellart; WNGT2019).
 Much of this code is adapted from an earlier fork of [XLM](https://github.com/facebookresearch/XLM).
@@ -6,14 +7,15 @@ Much of this code is adapted from an earlier fork of [XLM](https://github.com/fa
 
 ## Dataset and Preprocessing
 
-The boxscore-data json files can be downloaded from the [boxscore-data repo](https://github.com/harvardnlp/boxscore-data).
+<!---The boxscore-data json files can be downloaded from the [boxscore-data repo](https://github.com/harvardnlp/boxscore-data).--->
 
-Assuming the RotoWire json files reside at `./rotowire`, the following commands will preprocess the data
+Assuming the RotoWire json files reside at `./nfl`, the following commands will preprocess the data
 
 ### Step1: Data extraction 
 
 ```
-python scripts/data_extract.py -d rotowire/train.json -o rotowire/train
+python scripts/data_extract.py -d nfl/train.json -o nfl/train
+python scripts/data_extract.py -d nfl/valid.json -o nfl/valid
 ```
 
 In this step, we:
@@ -25,24 +27,27 @@ In this step, we:
 ### Step2: Extract vocabulary
 
 ```
-python scripts/extract_vocab.py -t rotowire/train.gtable -s rotowire/train.summary
+python scripts/extract_vocab.py -t nfl/train.gtable -s nfl/train.summary
+python scripts/extract_vocab.py -t nfl/valid.gtable -s nfl/valid.summary
 ```
 It will generate vocabulary files for each of them:
 
-* `rotowire/train.gtable_vocab`
-* `rotowire/train.summary_vocab`
+* `nfl/train.gtable_vocab`
+* `nfl/train.summary_vocab`
 
 ### Step3: Binarize the data
 
 ```
-python model/preprocess_summary_data.py --summary rotowire/train.summary \
-                                        --summary_vocab rotowire/train.summary_vocab \
-                                        --summary_label rotowire/train.summary_label
+python model/preprocess_summary_data.py --summary nfl/train.summary --summary_vocab nfl/train.summary_vocab --summary_label nfl/train.summary_label
                                         
-python model/preprocess_table_data.py --table rotowire/train.gtable \
-                                      --table_label rotowire/train.gtable_label \
-                                      --table_vocab rotowire/train.gtable_vocab
+python model/preprocess_table_data.py --table nfl/train.gtable --table_label nfl/train.gtable_label --table_vocab nfl/train.gtable_vocab
+                                      
+python model/preprocess_summary_data.py --summary nfl/valid.summary --summary_vocab nfl/valid.summary_vocab --summary_label nfl/valid.summary_label
+                                        
+python model/preprocess_table_data.py --table nfl/valid.gtable --table_label nfl/valid.gtable_label --table_vocab nfl/valid.gtable_vocab
 ```
+
+All the steps that contain "valid" instead of "train" can be omitted if the model doesn't need to be trained on a new dataset.
 And we finally get the training data:
 * Input record sequences: `train.gtable.pth`
 * Output summaries: `train.summary.pth`
@@ -60,11 +65,11 @@ python $MODELPATH/train.py
 --exp_id "try1"
 
 ## data location / training objective
---train_cs_table_path rotowire/train.gtable.pth        # record data for content selection (CS) training
---train_sm_table_path rotowire/train.gtable.pth        # record data for data2text summarization (SM) training
---train_sm_summary_path rotowire/train.summary.pth     # summary data for data2text summarization (SM) training
---valid_table_path rotowire/valid.gtable.pth           # input record data for validation
---valid_summary_path rotowire/valid.summary.pth        # output summary data for validation
+--train_cs_table_path nfl/train.gtable.pth        # record data for content selection (CS) training
+--train_sm_table_path nfl/train.gtable.pth        # record data for data2text summarization (SM) training
+--train_sm_summary_path nfl/train.summary.pth     # summary data for data2text summarization (SM) training
+--valid_table_path nfl/valid.gtable.pth           # input record data for validation
+--valid_summary_path nfl/valid.summary.pth        # output summary data for validation
 --cs_step True                                         # enable content selection training objective
 --lambda_cs "1"                                        # CS training coefficient
 --sm_step True                                         # enable summarization objective
@@ -95,8 +100,8 @@ Download the baseline model from: [link](https://drive.google.com/open?id=1o4kx0
 
 ```
 MODEL_PATH=experiments/baseline/try1/best-valid_mt_bleu.pth
-INPUT_TABLE=rotowire/valid.gtable
-OUTPUT_SUMMARY=rotowire/valid.gtable_out
+INPUT_TABLE=nfl/valid.gtable
+OUTPUT_SUMMARY=nfl/valid.gtable_out
 
 python model/summarize.py 
     --model_path $MODEL_PATH
