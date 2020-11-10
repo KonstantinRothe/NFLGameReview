@@ -9,7 +9,7 @@ Much of this code is adapted from an earlier fork of [XLM](https://github.com/fa
 
 <!---The boxscore-data json files can be downloaded from the [boxscore-data repo](https://github.com/harvardnlp/boxscore-data).--->
 
-Assuming the RotoWire json files reside at `./nfl`, the following commands will preprocess the data
+Assuming the input json files reside at `./nfl`, the following commands will preprocess the data
 
 ### Step1: Data extraction 
 
