@@ -1,6 +1,17 @@
+.venv/*
 Transformer Model/rotowire/*
 Transformer Model/sbnation/*
 Transformer Model/rotowiretrain1.json
 Transformer Model/wngt2019.pdf
 Transformer Model/experiments/*
 Transformer Model/boxscore-data-master/*
+Transformer Model/README.md
+Transformer Model/binarize.txt
+Transformer Model/generate.sh
+Transformer Model/run_train.sh
+Transformer Model/test.py
+Transformer Model/train_model.sh
+Transformer Model/-p/*
+DataBackups/*
+DataGathering/*
+

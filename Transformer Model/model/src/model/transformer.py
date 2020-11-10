@@ -100,6 +100,7 @@ def get_masks(slen, lengths, causal):
     """
     Generate hidden states mask, and optionally an attention mask.
     """
+    print(type(lengths))
     assert lengths.max().item() <= slen
     bs = lengths.size(0)
     alen = torch.arange(slen, dtype=torch.long, device=lengths.device)

@@ -98,7 +98,6 @@ def load_summary_data(data, params, summary_path, split):
     """
     summary_data = load_binarized(summary_path, params)
     set_dico_parameters(params, summary_data['dico'])
-
     if 'target_dico' in data:
         assert data['target_dico'] == summary_data['dico']
         assert params.tgt_n_words == len(data['target_dico'])
@@ -124,20 +123,23 @@ def load_para_data(data, params, table_path, summary_path, split):
     summary_data = load_binarized(summary_path, params)
     set_dico_parameters(params, table_data['dico'])
     set_dico_parameters(params, summary_data['dico'])
+    print("=========== MY DEBUG =============")
+    print("Table Data Dico: {}".format(table_data['dico']))
+    print("Source Dico: {}".format(data['source_dico']))
+    print(data['source_dico'] == table_data['dico'])
+    #if 'source_dico' in data:
+    #    assert data['source_dico'] == table_data['dico']
+    #    assert params.src_n_words == len(data['source_dico'])
+    #else:
+    data['source_dico'] = table_data['dico']
+    params.src_n_words = len(data['source_dico'])
 
-    if 'source_dico' in data:
-        assert data['source_dico'] == table_data['dico']
-        assert params.src_n_words == len(data['source_dico'])
-    else:
-        data['source_dico'] = table_data['dico']
-        params.src_n_words = len(data['source_dico'])
-
-    if 'target_dico' in data:
-        assert data['target_dico'] == summary_data['dico']
-        assert params.tgt_n_words == len(data['target_dico'])
-    else:
-        data['target_dico'] = summary_data['dico']
-        params.tgt_n_words = len(data['target_dico'])
+    #if 'target_dico' in data:
+    #    assert data['target_dico'] == summary_data['dico']
+    #    assert params.tgt_n_words == len(data['target_dico'])
+    #else:
+    data['target_dico'] = summary_data['dico']
+    params.tgt_n_words = len(data['target_dico'])
 
     # create ParallelDataset
     dataset = ParallelDataset(

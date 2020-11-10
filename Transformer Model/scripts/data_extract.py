@@ -7,18 +7,19 @@ from collections import Counter, defaultdict
 from text2num import text2num, NumberException
 from tokenizer import word_tokenize, sent_tokenize
 
-NUM_PLAYERS = 13
+NUM_PLAYERS = 96 #2x 48 active players | there can only be a max of 11 players per side on the field at once, but each team may have up to 48 active players
+#per game, which is quite a lot since they all can be substituted during the match
 player_name_key="PLAYER_NAME"
-bs_keys = ["PLAYER-PLAYER_NAME", "PLAYER-START_POSITION", "PLAYER-MIN", "PLAYER-PTS",
-     "PLAYER-FGM", "PLAYER-FGA", "PLAYER-FG_PCT", "PLAYER-FG3M", "PLAYER-FG3A",
-     "PLAYER-FG3_PCT", "PLAYER-FTM", "PLAYER-FTA", "PLAYER-FT_PCT", "PLAYER-OREB",
-     "PLAYER-DREB", "PLAYER-REB", "PLAYER-AST", "PLAYER-TO", "PLAYER-STL", "PLAYER-BLK",
-     "PLAYER-PF", "PLAYER-FIRST_NAME", "PLAYER-SECOND_NAME"]
+bs_keys = ["PLAYER-PLAYER_NAME", "PLAYER-POSITION", "PLAYER-FIRST_NAME", "PLAYER-SECOND_NAME", "PLAYER-TEAM", "PLAYER-PASSING_ATTEMTPS", "PLAYER-PASSING_COMPLETIONS", 
+            "PLAYER-PASSING_YARDS", "PLAYER-PASSING_TOUCHDOWNS", "PLAYER-PASSING_INTERCEPTIONS", "PLAYER-PASSING_SACKS", "PLAYER-PASSING__SACKS_YARDS_LOST", 
+            "PLAYER-PASSING_RATE", "PLAYER-RUSHING_ATTEMPTS", "PLAYER-RUSHING_YARDS", "PLAYER-RUSHING_TOUCHDOWNS", "PLAYER-RECEIVING_RECEPTIONS", 
+            "PLAYER-RECEIVING_YARDS", "PLAYER-RECEIVING_TOUCHDOWNS", "PLAYER-RECEIVING_TARGETS", "PLAYER-INTERCEPTION_PASSING", "PLAYER-INTERCEPTION_YARDS", 
+            "PLAYER-INTERCEPTION_TOUCHDOWNS", "PLAYER-SACKS", "PLAYER-TACKLES_COMBINED", "PLAYER-TACKLES_SOLO", "PLAYER-TACKLES_ASSISTS", "PLAYER-KICK_ATTEMPTS", 
+            "PLAYER-KICK_YARDS", "PLAYER-KICK_TOUCHDOWNS", "PLAYER-PUNT_ATTEMPTS", "PLAYER-PUNT_YARDS", "PLAYER-PUNT_AVERAGE", "PLAYER-PUNT_TOUCHDOWNS"]
 
-ls_keys = ["TEAM-PTS_QTR1", "TEAM-PTS_QTR2", "TEAM-PTS_QTR3", "TEAM-PTS_QTR4",
-    "TEAM-PTS", "TEAM-FG_PCT", "TEAM-FG3_PCT", "TEAM-FT_PCT", "TEAM-REB",
-    "TEAM-AST", "TEAM-TOV", "TEAM-WINS", "TEAM-LOSSES", "TEAM-CITY", "TEAM-NAME"]
-
+ls_keys = ["TEAM_PTS", "TEAM_CITY", "TEAM_NAME", "TOTAL_PLAYS", "TOTAL_YARDS", "YARDS_PER_PLAY", 
+            "PASSING_YARDS", "RUSHING_YARDS", "DEFENSIVE_SPECIAL_TOUCHDOWNS"]
+#these keys had to be manually changed
 number_words = set(["one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
                     "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
                     "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty",
@@ -26,10 +27,11 @@ number_words = set(["one", "two", "three", "four", "five", "six", "seven", "eigh
 
 def _get_player_index(game):
     home_players, vis_players = [], []
-    nplayers = len(game["box_score"]["PTS"].keys())
+    nplayers = len(game["box_score"]["PLAYER_NAME"].keys())
+
     if game["home_city"] != game["vis_city"]:
         for index in [str(x) for x in range(nplayers)]:
-            player_city = game["box_score"]["TEAM_CITY"][index]
+            player_city = game["box_score"]["TEAM"][index] 
             if player_city == game["home_city"]:
                 if len(home_players) < NUM_PLAYERS:
                     home_players.append(index)
@@ -45,8 +47,8 @@ def _get_player_index(game):
     return home_players, vis_players
 
 def _get_win_loss(game):
-    home_score = int(game['home_line']['TEAM-PTS'])
-    vis_score  = int(game['vis_line']['TEAM-PTS'])
+    home_score = int(game['home_line']['TEAM_PTS'])
+    vis_score  = int(game['vis_line']['TEAM_PTS'])
     if home_score >= vis_score: # normally there is no tie game
         return ('W', 'L')
     elif vis_score > home_score:
@@ -55,15 +57,15 @@ def _get_win_loss(game):
 def extract_entities(json_data):
     entities = {}
     for game in json_data:
-        entities[game['home_name']] = 'TEAM-NAME'
-        entities[game["home_line"]["TEAM-NAME"]] = 'TEAM-NAME'
-        entities[game['vis_name']] = 'TEAM-NAME'
-        entities[game["vis_line"]["TEAM-NAME"]] = 'TEAM-NAME'
+        entities[game['home_name']] = 'TEAM_NAME'
+        entities[game["home_line"]["TEAM_NAME"]] = 'TEAM_NAME'
+        entities[game['vis_name']] = 'TEAM_NAME'
+        entities[game["vis_line"]["TEAM_NAME"]] = 'TEAM_NAME'
 
-        entities[game['home_city']] = 'TEAM-CITY'
-        entities[game['vis_city']] = 'TEAM-CITY'
-        entities['LA'] = 'TEAM-CITY'
-        entities['Los Angeles'] = 'TEAM-CITY'
+        entities[game['home_city']] = 'TEAM_CITY'
+        entities[game['vis_city']] = 'TEAM_CITY'
+        entities['LA'] = 'TEAM_CITY'
+        entities['Los Angeles'] = 'TEAM_CITY'
 
         for player_key in game['box_score']['PLAYER_NAME']:
             player_name = game['box_score']['PLAYER_NAME'][player_key]
@@ -94,25 +96,25 @@ def extract_game_entities(json_data):
     for game in json_data:
         entities = {}
 
-        entities[game['home_name']] = 'home TEAM-NAME'
-        entities[game["home_line"]["TEAM-NAME"]] = 'home TEAM-NAME'
-        entities[game['vis_name']] = 'vis TEAM-NAME'
-        entities[game["vis_line"]["TEAM-NAME"]] = 'vis TEAM-NAME'
+        entities[game['home_name']] = 'home TEAM_NAME'
+        entities[game["home_line"]["TEAM_NAME"]] = 'home TEAM_NAME'
+        entities[game['vis_name']] = 'vis TEAM_NAME'
+        entities[game["vis_line"]["TEAM_NAME"]] = 'vis TEAM_NAME'
 
-        entities[game['home_city']] = 'home TEAM-CITY'
-        entities[game['vis_city']] = 'vis TEAM-CITY'
+        entities[game['home_city']] = 'home TEAM_CITY'
+        entities[game['vis_city']] = 'vis TEAM_CITY'
 
         if game["home_city"] == "Los Angeles" or game["home_city"] == 'LA':
-            entities['LA'] = 'home TEAM-CITY'
-            entities['Los Angeles'] = 'home TEAM-CITY'
+            entities['LA'] = 'home TEAM_CITY'
+            entities['Los Angeles'] = 'home TEAM_CITY'
 
         if game["vis_city"] == "Los Angeles" or game["vis_city"] == 'LA':
-            entities['LA'] = 'vis TEAM-CITY'
-            entities['Los Angeles'] = 'vis TEAM-CITY'
+            entities['LA'] = 'vis TEAM_CITY'
+            entities['Los Angeles'] = 'vis TEAM_CITY'
 
         if game["home_city"] == game["vis_city"]:
-            entities['LA'] = 'TEAM-CITY'
-            entities['Los Angeles'] = 'TEAM-CITY'
+            entities['LA'] = 'TEAM_CITY'
+            entities['Los Angeles'] = 'TEAM_CITY'
 
         for player_key in game['box_score']['PLAYER_NAME']:
             player_name = game['box_score']['PLAYER_NAME'][player_key]
@@ -122,7 +124,7 @@ def extract_game_entities(json_data):
             entities[player_first] = player_key
             entities[player_second] = player_key
 
-        for name in game['box_score']['TEAM_CITY'].values():
+        for name in game['box_score']['TEAM'].values():
             assert name in entities
 
         for entity in list(entities.keys()):
@@ -153,6 +155,7 @@ def extract_player_stats(game, player_key, player_feat):
     for key in bs_keys:
         rel_entity = game["box_score"][player_name_key][player_key] if player_key is not None else "N/A"
         rel_type = key.split('-')[1]
+        #print("DEBUG: ---rel_type = {} ---player_key = {}".format(rel_type, player_key))
         rel_value = game["box_score"][rel_type][player_key] if player_key is not None else "N/A"
         rel_item = '{}|{}|{}|{}'.format(rel_entity, rel_type, rel_value, player_feat)
         result.append(rel_item)
@@ -166,12 +169,12 @@ def extract_team_stats(game):
     vis_result = []
     home_winloss, vis_winloss = _get_win_loss(game)
     for key in ls_keys:
-        home_entity= game["home_line"]['TEAM-NAME']
+        home_entity= game["home_line"]['TEAM_NAME']
         home_value = game["home_line"][key]
         home_type  = key
         home_feat  = 'H/{}'.format(home_winloss)
 
-        vis_entity = game["vis_line"]['TEAM-NAME']
+        vis_entity = game["vis_line"]['TEAM_NAME']
         vis_value  = game["vis_line"][key]
         vis_type   = key
         vis_feat   = 'V/{}'.format(vis_winloss)
@@ -317,7 +320,7 @@ def get_links(game, summary_entities, summary_numbers):
                         or linescore[ls_key] == str(number_value):
                         links.append((start_idx, end_idx, entity_type, ls_key))
 
-            elif entity_type == 'TEAM-CITY': # Los Angeles
+            elif entity_type == 'TEAM_CITY': # Los Angeles
                 for ls_key in ls_keys:
                     if home_line_score[ls_key] == number_string \
                         or home_line_score[ls_key] == str(number_value):
@@ -338,7 +341,7 @@ def get_links(game, summary_entities, summary_numbers):
         if entity_type.startswith('home') or entity_type.startswith('vis'):
             ls_key = entity_type.split()[1]
             links.append((ent_start_idx, ent_end_idx, entity_type, ls_key))
-        elif entity_type == 'TEAM-CITY':
+        elif entity_type == 'TEAM_CITY':
             pass
             #links.append((ent_start_idx, ent_end_idx, entity_type, entity_type))
         else:
