@@ -38,11 +38,6 @@ def getSummaries():
                 page = urlopen(req).read()
                 soup = BeautifulSoup(page, "html.parser")
                 
-                #get all game names. these may be inside of <li> tags but are definetly marked by <b> tags. 
-                #because walter is a **** that doesnt understand common sense and programming he sometimes has the last (or even more?) 
-                #line of his report in the same <li> tag as the matchup (team names + scores)
-                #I have to get all the text between the first and last <b> [Team] [Score], [Team] [Score] </b>, no matter in which list item they are stored
-                #saves the semi-useful texts of the website to a file, hopefully this works for every paeg...
                 fulltext = ""
                 f =  open("reviews20{:02d}w{:02d}.txt".format(year, week), "w")
                 for el in soup.find_all('div', id="MainContentBlock"):
@@ -64,7 +59,7 @@ def format(filename):
     for line in f:
         #this is to keep the matchup as a separator
         l = strip_tags(line)
-        #after this there may be some leftover shit-html because the code from walterfootball really sucks 
+        #after this there may be some leftover html 
         l = re.sub(".+>", '', l)
         l = re.sub("^.*'\);", '', l)
 
@@ -122,7 +117,7 @@ def removeClutter(filename):
     f = open(filename, 'r').read()
     bsRegex = r"For thoughts on (.|\n)*'\);"  
     bs2Regex = r"For thoughts on .*$"
-    bs3Regex = r"\n(?!\w* \d{1,2}, \w* \d{1,2}\s*\n).*@.*\n\(Edit.+(?=\n)" #this hopefully removes the one to two lines if the report was written by someone else
+    bs3Regex = r"\n(?!\w* \d{1,2}, \w* \d{1,2}\s*\n).*@.*\n\(Edit.+(?=\n)" #this hopefully removes the one to two lines if the report was written by someone else --> it didnt, idc
     n = re.sub(bsRegex, "", f)
     n = re.sub(bs2Regex, "", n)
     n = re.sub(bs3Regex, "", n)
